@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
-/// Toolbar mit Markdown-Sanitisierung:
-/// - Markierung vorhanden → Markdown-Wrapper entfernen, dann Quill-Attribut setzen
-/// - Nur Cursor → aktuelles Wort ermitteln, ggf. Markdown entfernen, dann Attribut setzen
-/// - Überschrift/Liste: entfernt #- oder Listen-Prefixe der aktuellen Zeile und setzt echtes Block-Format
+/// Toolbar: entfernt Markdown-Zeichen und setzt echtes Rich-Text.
+/// - Markierung → säubern + formatieren
+/// - Nur Cursor → aktuelles Wort säubern + formatieren
+/// - Header/Liste: Zeilen-Prefixe (#, - [ ], 1., -, *) entfernen, dann Block setzen
 class EditorToolbar extends StatelessWidget {
   final quill.QuillController controller;
   final FocusNode? focusNode;
@@ -31,13 +31,10 @@ class EditorToolbar extends StatelessWidget {
 
   void _focus() { try { focusNode?.requestFocus(); } catch (_) {} }
 
-  // ---- Hilfen: Selektion/Wortbereich, Linerange, Text holen/ersetzen ----
   ({int start, int end}) _selectionOrWord() {
     final sel = controller.selection;
     final plain = controller.document.toPlainText();
-    if (sel.isValid && sel.start != sel.end) {
-      return (start: sel.start, end: sel.end);
-    }
+    if (sel.isValid && sel.start != sel.end) return (start: sel.start, end: sel.end);
     final i = sel.baseOffset.clamp(0, plain.length);
     if (plain.isEmpty) return (start: 0, end: 0);
     bool isBoundary(int idx) => idx < 0 || idx >= plain.length || RegExp(r'\s').hasMatch(plain[idx]);
@@ -61,9 +58,6 @@ class EditorToolbar extends StatelessWidget {
     controller.replaceText(index, len, replacement, afterSel ?? controller.selection);
   }
 
-  // ---- Markdown-Wrapper für Inline-Formate entfernen ----
-  // Unterstützt: **bold**, *italic*, ~~strike~~ (um den ausgewählten Bereich)
-  // Gibt den neuen (start,end)-Bereich nach Ersetzung zurück.
   ({int start, int end}) _stripInlineMarkdownAround(int start, int end, quill.Attribute attr) {
     final plain = controller.document.toPlainText();
     if (start < 0 || end > plain.length || start >= end) return (start: start, end: end);
@@ -74,20 +68,16 @@ class EditorToolbar extends StatelessWidget {
     bool removeWrap(String open, String close) {
       if (seg.startsWith(open) && seg.endsWith(close) && seg.length >= open.length + close.length) {
         seg = seg.substring(open.length, seg.length - close.length);
-        removedPrefix += open.length;
-        removedSuffix += close.length;
+        removedPrefix += open.length; removedSuffix += close.length;
         return true;
       }
       return false;
     }
 
-    // passend zum Button nur das relevante Paar entfernen
     if (attr == quill.Attribute.bold) {
-      removeWrap('**', '**'); // häufigster Fall
-      removeWrap('__', '__');
+      removeWrap('**', '**') || removeWrap('__', '__');
     } else if (attr == quill.Attribute.italic) {
-      // Achtung: '**' nicht anfassen; nur einfache Sternchen/Unterstriche
-      if (!removeWrap('**', '**')) {
+      if (!(seg.startsWith('**') && seg.endsWith('**'))) {
         removeWrap('*', '*') || removeWrap('_', '_');
       }
     } else if (attr == quill.Attribute.strikeThrough) {
@@ -96,9 +86,7 @@ class EditorToolbar extends StatelessWidget {
 
     if (removedPrefix + removedSuffix > 0) {
       _replace(
-        start,
-        end - start,
-        seg,
+        start, end - start, seg,
         afterSel: TextSelection(baseOffset: start, extentOffset: start + seg.length),
       );
       return (start: start, end: start + seg.length);
@@ -106,7 +94,6 @@ class EditorToolbar extends StatelessWidget {
     return (start: start, end: end);
   }
 
-  // ---- Markdown-Prefixe der aktuellen Zeile entfernen (Header/Listen) ----
   void _stripHeaderAndListPrefixesAtCursor() {
     final lineInfo = _currentLine();
     String line = lineInfo.line;
@@ -115,9 +102,7 @@ class EditorToolbar extends StatelessWidget {
     if (m != null) {
       final removeLen = m.group(0)!.length;
       _replace(
-        lineInfo.lineStart,
-        removeLen,
-        '',
+        lineInfo.lineStart, removeLen, '',
         afterSel: TextSelection(
           baseOffset: controller.selection.baseOffset - removeLen,
           extentOffset: controller.selection.extentOffset - removeLen,
@@ -126,49 +111,35 @@ class EditorToolbar extends StatelessWidget {
     }
   }
 
-  // ---- Buttons ----
   void _toggleInline(quill.Attribute attr) {
     _focus();
-
-    // Bereich bestimmen (Selektion oder Wort)
     final r0 = _selectionOrWord();
-
-    // Erst Markdown-Wrapper weg
     final r1 = _stripInlineMarkdownAround(r0.start, r0.end, attr);
-
-    // Dann echtes Quill-Attribut anwenden (auf den bereinigten Bereich)
     if (r1.end > r1.start) {
       controller.formatText(r1.start, r1.end - r1.start, attr);
     } else {
-      controller.formatSelection(attr); // z. B. am Wortende
+      controller.formatSelection(attr);
     }
   }
 
   void _setHeader(int level) {
     _focus();
-    // Zeilen-Prefixe entfernen (#, ##, ###, - [ ], 1. , - , *)
     _stripHeaderAndListPrefixesAtCursor();
-
-    // Echte Quill-Überschrift setzen
     final attr = switch (level) {
       0 => quill.Attribute.clone(quill.Attribute.header, null),
       1 => quill.Attribute.h1,
       2 => quill.Attribute.h2,
       _ => quill.Attribute.h3,
     };
-    // Auf die komplette Zeile anwenden (inkl. Newline)
     final ln = _currentLine();
-    final len = (ln.lineEnd - ln.lineStart) + 1; // +1 für Zeilenumbruch
+    final len = (ln.lineEnd - ln.lineStart) + 1;
     controller.formatText(ln.lineStart, len, attr);
     onHeaderChanged(level);
   }
 
   void _toggleList(quill.Attribute listAttr) {
     _focus();
-    // Markdown-Listenzeichen entfernen
     _stripHeaderAndListPrefixesAtCursor();
-
-    // Quill-Liste setzen/entfernen
     final attrs = controller.getSelectionStyle().attributes;
     final same = attrs[listAttr.key]?.value == listAttr.value;
     controller.formatSelection(same ? quill.Attribute.clone(listAttr, null) : listAttr);

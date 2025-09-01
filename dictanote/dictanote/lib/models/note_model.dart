@@ -4,13 +4,14 @@ enum NoteTemplate { blank, todo, meeting, journal }
 
 class NoteModel {
   String title;
-  String quillDeltaJson; // Rich-Text als Delta JSON (String)
-  String preview;        // 1. Zeile Plaintext
+  String quillDeltaJson; // Quill Delta als JSON-String
+  String preview;        // erste Zeile als Plaintext
   final NoteTemplate template;
   DateTime updatedAt;
   bool pinned;
   int colorIndex;
   String emoji;
+  List<String> tags;
 
   NoteModel({
     required this.title,
@@ -21,7 +22,9 @@ class NoteModel {
     this.pinned = false,
     this.colorIndex = 0,
     this.emoji = '📝',
-  }) : updatedAt = updatedAt ?? DateTime.now();
+    List<String>? tags,
+  })  : tags = tags ?? <String>[],
+        updatedAt = updatedAt ?? DateTime.now();
 }
 
 // weiche Akzentfarben für Kartenstreifen

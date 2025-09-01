@@ -21,7 +21,7 @@ class TemplateCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Ink(
         width: 170,
-        height: 90,
+        height: 92,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),

@@ -7,6 +7,7 @@ class NoteCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onDelete;
   final VoidCallback onPinToggle;
+  final String searchQuery;
 
   const NoteCard({
     super.key,
@@ -14,12 +15,22 @@ class NoteCard extends StatelessWidget {
     required this.onTap,
     required this.onDelete,
     required this.onPinToggle,
+    this.searchQuery = '',
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final accent = noteColors[note.colorIndex % noteColors.length];
+
+    final base = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: cs.onSurfaceVariant,
+        )!;
+    final hl = base.copyWith(
+      backgroundColor: cs.tertiaryContainer,
+      color: cs.onTertiaryContainer,
+      fontWeight: FontWeight.w600,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -37,7 +48,7 @@ class NoteCard extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 6, height: 86,
+                  width: 6, height: 100,
                   decoration: BoxDecoration(
                     color: accent.shade400,
                     borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
@@ -57,12 +68,18 @@ class NoteCard extends StatelessWidget {
                           maxLines: 1, overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          note.preview,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: cs.onSurfaceVariant,
-                              ),
+                        Text.rich(
+                          highlightSpan(note.preview, searchQuery, base, hl),
                           maxLines: 2, overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6, runSpacing: -6,
+                          children: note.tags.map((t) => Chip(
+                            label: Text(t),
+                            visualDensity: VisualDensity.compact,
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          )).toList(),
                         ),
                         const SizedBox(height: 6),
                         Row(

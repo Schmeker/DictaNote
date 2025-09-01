@@ -22,20 +22,36 @@ class _NotesPageState extends State<NotesPage> {
         {'insert': '\n', 'attributes': {'header': 1}},
         {'insert': 'Tippe auf '},
         {'insert': 'Neu', 'attributes': {'italic': true}},
-        {'insert': ', wähle eine Vorlage und formatiere mit der Toolbar.'},
+        {'insert': ', wähle eine Vorlage und nutze die Toolbar.'},
         {'insert': '\n'}
       ]),
       preview: 'Willkommen bei DictaNote',
       template: NoteTemplate.blank,
       emoji: '✨',
       colorIndex: 0,
+      tags: ['intro', 'tipps'],
     ),
   ];
+
+  // UI-State
+  bool _fabOpen = false;
+  bool _searchOpen = false;
+  String _query = '';
+  final Set<String> _activeTags = {};
+
+  static const String kLogoPath = 'assets/icons/app_logo.png';
+
+  @override
+  void didChangeDependencies() {
+    // Logo vorladen
+    precacheImage(const AssetImage(kLogoPath), context);
+    super.didChangeDependencies();
+  }
 
   void _snack(String m) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
 
-  // ========= In DIE KLASSE INTEGRIERT: Delta-Vorlagen =========
+  // ---- Delta-Vorlagen (echtes Rich-Text) ----
   List<Map<String, dynamic>> _deltaForTemplate(NoteTemplate t) {
     switch (t) {
       case NoteTemplate.blank:
@@ -96,7 +112,7 @@ class _NotesPageState extends State<NotesPage> {
     }
   }
 
-  Future<void> _showTemplateSheet() async {
+  Future<void> _openTemplateSheet() async {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -150,10 +166,7 @@ class _NotesPageState extends State<NotesPage> {
   }
 
   Future<void> _createFromTemplate(
-    NoteTemplate t, {
-    required String emoji,
-    required int colorIndex,
-  }) async {
+    NoteTemplate t, {required String emoji, required int colorIndex}) async {
     Navigator.pop(context);
     final ops = _deltaForTemplate(t);
     final title = switch (t) {
@@ -172,6 +185,7 @@ class _NotesPageState extends State<NotesPage> {
       template: t,
       emoji: emoji,
       colorIndex: colorIndex,
+      tags: t == NoteTemplate.todo ? ['todo'] : t == NoteTemplate.meeting ? ['meeting'] : [],
     );
 
     final res = await Navigator.push<NoteModel>(
@@ -198,48 +212,148 @@ class _NotesPageState extends State<NotesPage> {
     }
   }
 
+  // ---- Suche & Filter ----
+  Iterable<NoteModel> get _filteredNotes sync* {
+    final q = _query.trim().toLowerCase();
+    for (final n in _notes) {
+      final tagsOk = _activeTags.isEmpty || n.tags.any(_activeTags.contains);
+      final textOk = q.isEmpty ||
+          n.title.toLowerCase().contains(q) ||
+          n.preview.toLowerCase().contains(q);
+      if (tagsOk && textOk) yield n;
+    }
+  }
+
+  List<String> get _allTags {
+    final s = <String>{};
+    for (final n in _notes) { s.addAll(n.tags); }
+    return s.toList()..sort();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final pinned = _notes.where((n) => n.pinned).toList();
-    final others = _notes.where((n) => !n.pinned).toList();
+    final cs = Theme.of(context).colorScheme;
+    final pinned = _filteredNotes.where((n) => n.pinned).toList();
+    final others = _filteredNotes.where((n) => !n.pinned).toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('DictaNote'),
-        actions: [IconButton(icon: const Icon(Icons.search), onPressed: () {})],
+        automaticallyImplyLeading: false,
+        leadingWidth: 52,
+        leading: Padding(
+          padding: const EdgeInsets.all(6.0),
+          child: Image.asset('assets/icons/app_logo.png'),
+        ),
+        title: _searchOpen
+            ? TextField(
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Suche…',
+                  border: InputBorder.none,
+                ),
+                onChanged: (v) => setState(() => _query = v),
+              )
+            : const Text('DictaNote'),
+        actions: [
+          IconButton(
+            tooltip: _searchOpen ? 'Suche schließen' : 'Suche',
+            icon: Icon(_searchOpen ? Icons.close : Icons.search),
+            onPressed: () => setState(() {
+              _searchOpen = !_searchOpen;
+              if (!_searchOpen) _query = '';
+            }),
+          ),
+        ],
       ),
+
       body: ListView(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
         children: [
+          // Filterchips
+          if (_allTags.isNotEmpty) ...[
+            Wrap(
+              spacing: 8, runSpacing: -6,
+              children: _allTags.map((t) {
+                final selected = _activeTags.contains(t);
+                return FilterChip(
+                  selected: selected,
+                  label: Text(t),
+                  onSelected: (_) => setState(() {
+                    if (selected) { _activeTags.remove(t); } else { _activeTags.add(t); }
+                  }),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+          ],
+
           if (pinned.isNotEmpty) ...[
             _SectionHeader('Gepinnt'),
             const SizedBox(height: 8),
-            ...pinned.map((n) => NoteCard(
-                  note: n,
-                  onTap: () => _openEditor(n),
-                  onDelete: () => setState(() => _notes.remove(n)),
-                  onPinToggle: () => setState(() => n.pinned = !n.pinned),
-                )),
+            ...pinned.map((n) => _buildDismissible(n)),
             const SizedBox(height: 16),
           ],
           _SectionHeader('Notizen'),
           const SizedBox(height: 8),
           if (others.isEmpty)
-            const _EmptyState()
+            _EmptyState(onCreate: _openTemplateSheet)
           else
-            ...others.map((n) => NoteCard(
-                  note: n,
-                  onTap: () => _openEditor(n),
-                  onDelete: () => setState(() => _notes.remove(n)),
-                  onPinToggle: () => setState(() => n.pinned = !n.pinned),
-                )),
-          const SizedBox(height: 64),
+            ...others.map((n) => _buildDismissible(n)),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showTemplateSheet,
-        icon: const Icon(Icons.add),
-        label: const Text('Neu'),
+
+      // Speed-Dial-FAB (ohne Zusatzpaket)
+      floatingActionButton: _FabMenu(
+        open: _fabOpen,
+        onToggle: () => setState(() => _fabOpen = !_fabOpen),
+        items: [
+          FabItem(icon: Icons.description_outlined, label: 'Leere Notiz',
+              onTap: () => _openTemplateSheet()),
+          FabItem(icon: Icons.checklist_rounded, label: 'To-Do',
+              onTap: () => _createFromTemplate(NoteTemplate.todo, emoji: '✅', colorIndex: 1)),
+          FabItem(icon: Icons.meeting_room_outlined, label: 'Meeting',
+              onTap: () => _createFromTemplate(NoteTemplate.meeting, emoji: '📋', colorIndex: 2)),
+          FabItem(icon: Icons.menu_book_outlined, label: 'Journal',
+              onTap: () => _createFromTemplate(NoteTemplate.journal, emoji: '📔', colorIndex: 3)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDismissible(NoteModel n) {
+    return Dismissible(
+      key: ValueKey('${n.title}-${n.updatedAt.toIso8601String()}'),
+      background: Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 16),
+        decoration: BoxDecoration(
+          color: Colors.amber, borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.push_pin),
+      ),
+      secondaryBackground: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: Colors.red, borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      onDismissed: (dir) {
+        setState(() {
+          if (dir == DismissDirection.startToEnd) {
+            n.pinned = !n.pinned;
+          } else {
+            _notes.remove(n);
+          }
+        });
+      },
+      child: NoteCard(
+        note: n,
+        searchQuery: _query,
+        onTap: () => _openEditor(n),
+        onDelete: () => setState(() => _notes.remove(n)),
+        onPinToggle: () => setState(() => n.pinned = !n.pinned),
       ),
     );
   }
@@ -264,7 +378,8 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  final VoidCallback onCreate;
+  const _EmptyState({required this.onCreate});
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -284,8 +399,69 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 6),
           Text('Tippe auf „Neu“, um mit einer Vorlage zu starten.',
               style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: onCreate,
+            icon: const Icon(Icons.add),
+            label: const Text('Neu erstellen'),
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// ---------- Einfaches Speed-Dial ohne Paket ----------
+class FabItem {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  FabItem({required this.icon, required this.label, required this.onTap});
+}
+
+class _FabMenu extends StatelessWidget {
+  final bool open;
+  final VoidCallback onToggle;
+  final List<FabItem> items;
+  const _FabMenu({required this.open, required this.onToggle, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    final children = <Widget>[
+      ...items.asMap().entries.map((e) {
+        final i = e.key;
+        final it = e.value;
+        return AnimatedSlide(
+          key: ValueKey(it.label),
+          duration: const Duration(milliseconds: 220),
+          offset: open ? Offset(0, -(i + 1) * 1.2) : const Offset(0, 0),
+          curve: Curves.easeOutCubic,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 220),
+            opacity: open ? 1 : 0,
+            child: FloatingActionButton.extended(
+              heroTag: 'fab-$i',
+              onPressed: () {
+                onToggle();
+                it.onTap();
+              },
+              icon: Icon(it.icon),
+              label: Text(it.label),
+            ),
+          ),
+        );
+      }),
+      FloatingActionButton(
+        heroTag: 'fab-main',
+        onPressed: onToggle,
+        child: Icon(open ? Icons.close : Icons.add),
+      ),
+    ];
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: children
+          .map((w) => Padding(padding: const EdgeInsets.only(bottom: 8, right: 8), child: w))
+          .toList(),
     );
   }
 }

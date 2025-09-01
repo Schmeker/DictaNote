@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
@@ -15,14 +16,17 @@ class NoteEditorPage extends StatefulWidget {
 
 class _NoteEditorPageState extends State<NoteEditorPage> {
   late TextEditingController _titleCtrl;
+  late TextEditingController _tagCtrl;
   late quill.QuillController _quillCtrl;
   final _focusNode = FocusNode();
 
-  // Toolbar-Status (für aktive Buttonfarben)
+  // Toolbar-Status
   bool _isBold = false, _isItalic = false, _isUnderline = false, _isStrike = false;
   int _headerLevel = 0;
-  String? _listType;   // 'ul' | 'ol'
-  String? _blockType;  // 'quote' | 'code'
+  String? _listType;
+  String? _blockType;
+
+  Timer? _debounce;
 
   quill.Document _docFromDeltaJson(String jsonStr) {
     try {
@@ -36,24 +40,31 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   void initState() {
     super.initState();
     _titleCtrl = TextEditingController(text: widget.note.title);
+    _tagCtrl   = TextEditingController(text: widget.note.tags.join(', '));
     _quillCtrl = quill.QuillController(
       document: _docFromDeltaJson(widget.note.quillDeltaJson),
       selection: const TextSelection.collapsed(offset: 0),
     );
-    _quillCtrl.addListener(_refreshToolbarState);
+    _quillCtrl.addListener(_onDocChanged);
     _refreshToolbarState();
-
-    // Markdown in echtes Rich-Text umwandeln (einmalig beim Öffnen)
     _autoConvertMarkdownIfAny();
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _titleCtrl.dispose();
-    _quillCtrl.removeListener(_refreshToolbarState);
+    _tagCtrl.dispose();
+    _quillCtrl.removeListener(_onDocChanged);
     _quillCtrl.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _onDocChanged() {
+    _refreshToolbarState();
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), _applySlashCommandIfAny);
   }
 
   void _refreshToolbarState() {
@@ -72,8 +83,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     });
   }
 
-  // -------- Markdown -> Delta (integriert in die Klasse) --------
-
+  // ---------- Markdown -> Delta ----------
   bool _looksLikeMarkdown(String plain) {
     final md = RegExp(
       r'(^\s{0,3}#{1,3}\s)|(\*\*[^*\n]+\*\*)|(^\s*[-*]\s)|(^\s*\d+\.\s)|(^\s*-\s\[[ xX]\]\s)',
@@ -86,7 +96,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final ops = <Map<String, dynamic>>[];
     final lines = plain.replaceAll('\r\n', '\n').split('\n');
 
-    // Inline-Parser: **bold**, *italic*, ~~strike~~
     List<Map<String, dynamic>> _inline(String s) {
       final segs = <Map<String, dynamic>>[];
       int i = 0;
@@ -194,15 +203,62 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     try {
       final ops = _markdownToDelta(plain);
       final newDoc = quill.Document.fromJson(ops);
-      _quillCtrl.removeListener(_refreshToolbarState);
+      _quillCtrl.removeListener(_onDocChanged);
       _quillCtrl = quill.QuillController(
         document: newDoc,
         selection: TextSelection.collapsed(offset: newDoc.length),
       );
-      _quillCtrl.addListener(_refreshToolbarState);
-      setState(() {}); // Editor neu zeichnen
-    } catch (_) {
-      // Failsafe: nichts tun, wenn Parser fehlschlägt
+      _quillCtrl.addListener(_onDocChanged);
+      setState(() {});
+    } catch (_) { /* ignore */ }
+  }
+
+  // ---------- Slash-Commands ----------
+  // /h1, /h2, /h3, /ul, /ol, /todo, /quote, /code
+  void _applySlashCommandIfAny() {
+    final plain = _quillCtrl.document.toPlainText();
+    final sel = _quillCtrl.selection;
+    final i = sel.baseOffset.clamp(0, plain.length);
+
+    int ls = plain.lastIndexOf('\n', (i - 1).clamp(0, plain.length - 1));
+    ls = (ls == -1) ? 0 : ls + 1;
+    int le = plain.indexOf('\n', i);
+    le = (le == -1) ? plain.length : le;
+    final line = plain.substring(ls, le);
+
+    final m = RegExp(r'^\/(h1|h2|h3|ul|ol|todo|quote|code)\s').firstMatch(line);
+    if (m == null) return;
+
+    final cmd = m.group(1)!;
+    // Befehl entfernen
+    _quillCtrl.replaceText(ls, m.group(0)!.length, '', TextSelection.collapsed(offset: ls));
+
+    // passenden Block/Attribut setzen
+    switch (cmd) {
+      case 'h1':
+        _quillCtrl.formatText(ls, (le - ls) + 1, quill.Attribute.h1);
+        break;
+      case 'h2':
+        _quillCtrl.formatText(ls, (le - ls) + 1, quill.Attribute.h2);
+        break;
+      case 'h3':
+        _quillCtrl.formatText(ls, (le - ls) + 1, quill.Attribute.h3);
+        break;
+      case 'ul':
+        _quillCtrl.formatSelection(quill.Attribute.ul);
+        break;
+      case 'ol':
+        _quillCtrl.formatSelection(quill.Attribute.ol);
+        break;
+      case 'todo':
+        _quillCtrl.formatSelection(const quill.Attribute('list', quill.AttributeScope.BLOCK, 'unchecked'));
+        break;
+      case 'quote':
+        _quillCtrl.formatSelection(quill.Attribute.blockQuote);
+        break;
+      case 'code':
+        _quillCtrl.formatSelection(quill.Attribute.codeBlock);
+        break;
     }
   }
 
@@ -210,6 +266,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final deltaJson = jsonEncode(_quillCtrl.document.toDelta().toJson());
     final plain = _quillCtrl.document.toPlainText();
     final preview = firstLineOf(plain);
+
+    final tags = _tagCtrl.text
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toSet()
+        .toList();
 
     Navigator.pop(
       context,
@@ -222,6 +285,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         pinned: widget.note.pinned,
         colorIndex: widget.note.colorIndex,
         emoji: widget.note.emoji,
+        tags: tags,
       ),
     );
   }
@@ -249,9 +313,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       ),
       body: Column(
         children: [
-          // Titelzeile
+          // Titel + Tags
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Row(
               children: [
                 Text(widget.note.emoji, style: const TextStyle(fontSize: 22)),
@@ -270,18 +334,24 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: TextField(
+              controller: _tagCtrl,
+              decoration: const InputDecoration(
+                hintText: 'Tags (mit Komma trennen) – z. B. work, ideen',
+                prefixIcon: Icon(Icons.sell_outlined),
+              ),
+            ),
+          ),
 
-          // Toolbar mit Smart-Toggle + Fokusweitergabe
+          // Toolbar
           EditorToolbar(
             controller: _quillCtrl,
-            focusNode: _focusNode, // falls deine quill-Version das nicht kennt: diese Zeile entfernen
+            focusNode: _focusNode,
             headerLevel: _headerLevel,
-            isBold: _isBold,
-            isItalic: _isItalic,
-            isUnderline: _isUnderline,
-            isStrike: _isStrike,
-            listType: _listType,
-            blockType: _blockType,
+            isBold: _isBold, isItalic: _isItalic, isUnderline: _isUnderline, isStrike: _isStrike,
+            listType: _listType, blockType: _blockType,
             onHeaderChanged: (lvl) => _headerLevel = lvl,
           ),
 
@@ -299,7 +369,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 ),
                 child: quill.QuillEditor.basic(
                   controller: _quillCtrl,
-                  focusNode: _focusNode, // falls inkompatibel, entferne diese Zeile
+                  focusNode: _focusNode,
                 ),
               ),
             ),
