@@ -1,27 +1,16 @@
 import 'package:flutter/material.dart';
-import 'pages/notes_page.dart';
+import 'views/home_view.dart';
 
-void main() => runApp(const DictaNoteApp());
+void main() => runApp(const MyApp());
 
-class DictaNoteApp extends StatelessWidget {
-  const DictaNoteApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'DictaNote',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.indigo,
-        brightness: Brightness.light,
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.indigo,
-        brightness: Brightness.dark,
-      ),
-      home: const NotesPage(),
+      home: const HomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
