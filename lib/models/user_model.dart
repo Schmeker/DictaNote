@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class UserModel {
-  final String? id;
+  final int? id;
   final String username;
   final String email;
   final String passwordHash;
@@ -16,6 +16,7 @@ class UserModel {
     required this.firstname,
     required this.lastname,
   });
+
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(

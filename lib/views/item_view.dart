@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../models/item.dart';
+import '../models/item_model.dart';
 
-class ListPage extends StatelessWidget {
+class ItemPage extends StatelessWidget {
   final ItemModel list;
 
-  const ListPage({super.key, required this.list});
+  const ItemPage({super.key, required this.list});
 
   @override
   Widget build(BuildContext context) {

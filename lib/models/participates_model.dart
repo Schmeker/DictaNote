@@ -1,6 +1,6 @@
 class ParticipantModel {
-  final String userId;
-  final String listId;
+  final int userId;
+  final int listId;
 
   ParticipantModel({
     required this.userId,
@@ -20,4 +20,5 @@ class ParticipantModel {
       'list_id': listId,
     };
   }
+
 }

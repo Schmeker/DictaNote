@@ -1,30 +1,39 @@
 import 'package:flutter/material.dart';
-import 'list_view.dart';
-import '../models/list.dart';
+import '../providers/user_provider.dart';
+import '../models/list_model.dart';
+import '../models/user_model.dart';
+import '../services/database_service.dart';
 import '../widgets/list_card.dart';
+import 'list_view.dart';
 
 
 enum Template { toDo, shopping, custom }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.title});
+  //required this.userId
+  HomePage({super.key,});
 
-  final String title;
+  // TODO fetch user from database. do it later
+  final UserModel user = UserModel(username: "joni", email: "joniwinter6@gmail.com", passwordHash: "123jgbas3213", firstname: "Jonathan", lastname: "Winter");
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  late DatabaseService db;
+  final List<ListModel> _lists = [];
+
+  //final String title = "Hello " + UserModel.getUsername(user);
+
   Template? _selectedTemplate;
   final TextEditingController _customController = TextEditingController();
 
-  final List<ListModel> _lists = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(title: Text("Hello ${widget.user.username}")),
       body: _lists.isEmpty
           ? const Center(child: Text("No lists created"))
           : ListView.builder(
@@ -37,7 +46,8 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => ListPage(list: list),
+                  //TODO: This is a workaround
+                  builder: (_) => ListPage(listId: 1, listTitle: "hallo",),
                 ),
               );
             },
@@ -99,7 +109,9 @@ class _HomePageState extends State<HomePage> {
                         String title = _customController.text;
 
                         setState(() {
-                          _lists.add(ListModel(title: title));
+                          //TODO: this is wa workaround
+                          DateTime emptyDateTime = DateTime.fromMillisecondsSinceEpoch(0);
+                          _lists.add(ListModel(title: title, ownerId: 1, type: 'todo', createdAt: emptyDateTime , updatedAt: emptyDateTime));
                         });
 
                         Navigator.pop(context);

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/list.dart';
+import '../models/list_model.dart';
 
 class ListCard extends StatelessWidget {
   final ListModel list;
@@ -37,13 +37,13 @@ class ListCard extends StatelessWidget {
                         "Are you sure you want to delete this list?"),
                     actions: [
                       TextButton(
-                        onPressed: () => Navigator.pop(context), // nur schließen
+                        onPressed: () => Navigator.pop(context),
                         child: const Text("Cancel"),
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.pop(context); // Dialog schließen
-                          onDelete(); // Callback ausführen
+                          Navigator.pop(context);
+                          onDelete();
                         },
                         child: const Text("Delete"),
                       ),

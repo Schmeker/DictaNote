@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 
 class ItemModel {
-  final String? id;
-  final String listId;
+  final int? id;
+  final int listId;
   final String title;
   final String? description;
   final bool completed;

@@ -1,6 +1,6 @@
 class ListModel {
-  final String? id;
-  final String ownerId;
+  final int? id;
+  final int ownerId;
   final String title;
   final String type; // e.g., "shopping", "todo", etc.
   final DateTime createdAt;
