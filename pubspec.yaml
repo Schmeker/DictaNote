@@ -1,11 +1,10 @@
-name: dictanote
-description: Notizapp mit Rich-Text, Templates, Suche/Filter und modernem UI.
+name: Dictanote
+description: "A new Flutter project."
 publish_to: "none"
 version: 1.0.0+1
 
 environment:
   sdk: ^3.9.0
-  flutter: ">=3.22.0"
 
 dependencies:
   flutter:
@@ -14,29 +13,13 @@ dependencies:
   # Rich-Text Editor
   flutter_quill: ^11.4.2
 
-  # (optional) Cupertino Icons – falls du sie irgendwo nutzt
-  cupertino_icons: ^1.0.6
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
 
-  # (optional) Launcher-Icons/Favicon-Generator
-  flutter_launcher_icons: ^0.13.1
-
 flutter:
   uses-material-design: true
 
   assets:
-    # App-Logo (für AppBar & ggf. als Quelle für Launcher Icons)
-    - assets/icons/dictanote.png
-
-# === Nur nötig, wenn du App-Icons generieren willst (Android/iOS/Web) ===
-flutter_icons:
-  android: true
-  ios: true
-  web:
-    generate: true
-    image_path: assets/icons/app_logo.png
-  image_path: assets/icons/app_logo.png
+    - assets/icons
