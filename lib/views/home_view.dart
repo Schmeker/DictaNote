@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:group_radio_button/group_radio_button.dart' as grp;
+
 import '../providers/user_provider.dart';
 import '../models/list_model.dart';
 import '../models/user_model.dart';
 import '../services/database_service.dart';
 import '../widgets/list_card.dart';
+
 import 'list_view.dart';
 
 
@@ -23,8 +26,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late DatabaseService db;
   final List<ListModel> _lists = [];
-
-  //final String title = "Hello " + UserModel.getUsername(user);
 
   Template? _selectedTemplate;
   final TextEditingController _customController = TextEditingController();
@@ -46,13 +47,14 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  //TODO: This is a workaround
-                  builder: (_) => ListPage(listId: 1, listTitle: "hallo",),
+                  //TODO: This is a workaround Maybe fetch from db??
+                  builder: (_) => ListPage(listId: _lists[index].ownerId, listTitle: _lists[index].title,),
                 ),
               );
             },
             onDelete: () {
               setState(() {
+                //TODO: remove from database, then fetch list instead of deleting a
                 _lists.removeAt(index);
               });
             },
@@ -78,22 +80,19 @@ class _HomePageState extends State<HomePage> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ...Template.values.map((template) {
-                    return RadioListTile<Template>(
-                      title: Text(template.name),
-                      value: template,
-                      groupValue: _selectedTemplate,
-                      onChanged: (Template? value) {
-                        setStateDialog(() {
-                          _selectedTemplate = value;
-                        });
-                      },
-                    );
-                  }),
+                  grp.RadioGroup<Template>.builder(
+                    groupValue: _selectedTemplate ?? Template.values.first,
+                    onChanged: (value) => setStateDialog(() {
+                      _selectedTemplate = value;
+                    }),
+                    items: Template.values,
+                    itemBuilder: (template) => grp.RadioButtonBuilder(
+                      template.name,
+                    ),
+                  ),
                   TextField(
                     controller: _customController,
-                    decoration:
-                    const InputDecoration(labelText: "Create title"),
+                    decoration: const InputDecoration(labelText: "Create title"),
                   ),
                 ],
               ),
@@ -109,9 +108,10 @@ class _HomePageState extends State<HomePage> {
                         String title = _customController.text;
 
                         setState(() {
-                          //TODO: this is wa workaround
+                          //TODO: this is a workaround fix owner and timestamps
                           DateTime emptyDateTime = DateTime.fromMillisecondsSinceEpoch(0);
-                          _lists.add(ListModel(title: title, ownerId: 1, type: 'todo', createdAt: emptyDateTime , updatedAt: emptyDateTime));
+                          _lists.add(ListModel(title: title, ownerId: 1, type: _selectedTemplate.toString(), createdAt: emptyDateTime , updatedAt: emptyDateTime));
+                          //TODO: push to db, db should send id back to add it to the list, maybe first upload to db, so we can just give the id to the list
                         });
 
                         Navigator.pop(context);

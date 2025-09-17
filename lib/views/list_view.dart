@@ -63,7 +63,7 @@ class _ListPageState extends State<ListPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Add item form
+
         },
         child: const Icon(Icons.add),
       ),

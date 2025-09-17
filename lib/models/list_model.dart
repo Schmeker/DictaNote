@@ -2,7 +2,7 @@ class ListModel {
   final int? id;
   final int ownerId;
   final String title;
-  final String type; // e.g., "shopping", "todo", etc.
+  final String type; // e.g., "shopping", "todo", "etc."
   final DateTime createdAt;
   final DateTime updatedAt;
 
