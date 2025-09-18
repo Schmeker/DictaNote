@@ -37,7 +37,29 @@ class ItemCard extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: onDelete,
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text("Delete item"),
+                    content: const Text(
+                        "Are you sure you want to delete this item?"),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("Cancel"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          onDelete!();
+                        },
+                        child: const Text("Delete"),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
         ),
