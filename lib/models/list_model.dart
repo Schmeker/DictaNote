@@ -1,39 +1,37 @@
+import 'package:Dictanote/models/item_model.dart';
+import '../views/home_view.dart';
+
 class ListModel {
-  final int? id;
+  final int id;
   final int ownerId;
   final String title;
-  final String type; // e.g., "shopping", "todo", "etc."
+  final Template type; // "shopping", "todo", "etc."
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<ItemModel> items;
 
   ListModel({
-    this.id,
+    required this.id,
     required this.ownerId,
     required this.title,
     required this.type,
     required this.createdAt,
     required this.updatedAt,
-  });
+    List<ItemModel>? items,
+  }) : items = items ?? [];
 
-  factory ListModel.fromJson(Map<String, dynamic> json) {
-    return ListModel(
-      id: json['id'],
-      ownerId: json['owner_id'],
-      title: json['title'],
-      type: json['type'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
-    );
+  List<String> get allowedAttributes {
+    switch (type) {
+      case Template.shopping:
+        return ["title", "description", "completed", "amount"];
+      case Template.toDo:
+        return ["title", "description", "completed", "priority"]; //TODO: add Timetill in the future;
+      case Template.custom:
+        return [];
+      //default:
+        //return ["title"];
+    }
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'owner_id': ownerId,
-      'title': title,
-      'type': type,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-    };
-  }
+  int get listId => id;
 }

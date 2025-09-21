@@ -13,11 +13,13 @@ import 'list_view.dart';
 enum Template { toDo, shopping, custom }
 
 class HomePage extends StatefulWidget {
-  //required this.userId
+// final UserModel user
+
+  //required this.user
   HomePage({super.key,});
 
-  // TODO fetch user from database. do it later
-  final UserModel user = UserModel(username: "joni", email: "joniwinter6@gmail.com", passwordHash: "123jgbas3213", firstname: "Jonathan", lastname: "Winter");
+  // TODO fetch user from database
+  final UserModel user = UserModel(id: 1, username: "joni", email: "joniwinter6@gmail.com", passwordHash: "123jgbas3213", firstname: "Jonathan", lastname: "Winter");
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -27,7 +29,7 @@ class _HomePageState extends State<HomePage> {
   late DatabaseService db;
   final List<ListModel> _lists = [];
 
-  Template? _selectedTemplate;
+  Template _selectedTemplate = Template.values.first;
   final TextEditingController _customController = TextEditingController();
 
 
@@ -47,14 +49,13 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  //TODO: This is a workaround Maybe fetch from db??
-                  builder: (_) => ListPage(listId: _lists[index].ownerId, listTitle: _lists[index].title,),
+                  builder: (_) => ListPage(list: _lists[index]),
                 ),
               );
             },
             onDelete: () {
               setState(() {
-                //TODO: remove from database, then fetch list instead of deleting a
+                //TODO: remove from database, then fetch list instead of deleting bsp: _lists.load();
                 _lists.removeAt(index);
               });
             },
@@ -70,6 +71,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showTemplateSelectionDialog() {
+    _customController.clear();
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -81,9 +84,9 @@ class _HomePageState extends State<HomePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   grp.RadioGroup<Template>.builder(
-                    groupValue: _selectedTemplate ?? Template.values.first,
+                    groupValue: _selectedTemplate,
                     onChanged: (value) => setStateDialog(() {
-                      _selectedTemplate = value;
+                      _selectedTemplate = value!;
                     }),
                     items: Template.values,
                     itemBuilder: (template) => grp.RadioButtonBuilder(
@@ -103,26 +106,18 @@ class _HomePageState extends State<HomePage> {
                 ),
                 TextButton(
                   onPressed: () {
-                    if (_selectedTemplate != null) {
-                      if( _customController.text.isNotEmpty){
-                        String title = _customController.text;
+                    //TODO: index lists title if already same name exists: toDo, toDo 2, toDo 3, ....
+                    String title = _customController.text.isEmpty
+                        ? _selectedTemplate.name
+                        : _customController.text;
 
-                        setState(() {
-                          //TODO: this is a workaround fix owner and timestamps
-                          DateTime emptyDateTime = DateTime.fromMillisecondsSinceEpoch(0);
-                          _lists.add(ListModel(title: title, ownerId: 1, type: _selectedTemplate.toString(), createdAt: emptyDateTime , updatedAt: emptyDateTime));
-                          //TODO: push to db, db should send id back to add it to the list, maybe first upload to db, so we can just give the id to the list
-                        });
+                    setState(() {
+                      //TODO: push to db, db should send id back to add it to the list, maybe first upload to db, so we can just give the id to the list, also id is currently a workaround
+                      _lists.add(ListModel( id: DateTime.now().millisecondsSinceEpoch, title: title, ownerId: 1, type: _selectedTemplate, createdAt: DateTime.now(), updatedAt: DateTime.now()));
+                    });
 
-                        Navigator.pop(context);
-
-                        setState(() {
-                          _selectedTemplate = null;
-                          _customController.clear();
-                        });
-                      }
-                    }
-                  },
+                      Navigator.pop(context);
+                    },
                   child: const Text("Create"),
                 ),
               ],
