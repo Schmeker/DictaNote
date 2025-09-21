@@ -1,29 +1,16 @@
-// services/database_service.dart
 import '../models/list_model.dart';
 import '../models/item_model.dart';
-import '../models/participates_model.dart';
-//TODO: nothing works here, all workaround
+import '../models/user_model.dart';
+
 class DatabaseService {
+
   // -----------------------
   // Fetch all lists for a user
   // -----------------------
-  Future<List<ListModel>> getListsForUser(String userId) async {
+  Future<List<ListModel>> getListsForUser(int userId) async {
     // TODO: Replace with your DB/API query
     // Example: fetch lists where user is owner or participant
     final lists = <ListModel>[];
-
-    // Example pseudo data
-    lists.add(
-      ListModel(
-        id: 1,
-        ownerId: 1,
-        title: 'Shopping List',
-        type: 'shopping',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    );
-
     return lists;
   }
 
@@ -33,62 +20,104 @@ class DatabaseService {
   Future<List<ItemModel>> getItemsForList(int listId) async {
     final items = <ItemModel>[];
 
-    // Example pseudo data
-    items.add(
-      ItemModel(
-        id: 1,
-        listId: listId,
-        title: 'Milk',
-        completed: false,
-        amount: 2,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    );
-
     return items;
   }
 
   // -----------------------
-  // Fetch participants of a list
+  // Fetch all lists a user is participating in
   // -----------------------
-  Future<List<ParticipantModel>> getParticipantsForList(String listId) async {
-    final participants = <ParticipantModel>[];
+  Future<List<ListModel>> getListsForParticipant(int userId) async {
+    final list = <ListModel>[];
 
-    // Example pseudo data
-    participants.add(
-      ParticipantModel(
-        userId: 1,
-        listId: 1,
-      ),
-    );
-
-    return participants;
+    return list;
   }
 
   // -----------------------
-  // Add a new item to a list
+  // Add a new item
   // -----------------------
-  Future<void> addItemToList(ItemModel item) async {
-    // TODO: send POST request to backend or insert into DB
+  Future<void> addItem(ItemModel item) async {
+
     print('Added item: ${item.title}');
   }
 
   // -----------------------
-  // Toggle item completed
+  // Update an item
   // -----------------------
-  Future<void> updateItemCompletion(ItemModel item, bool completed) async {
-    // TODO: update DB or API
-    print('Updated item ${item.title} completed = $completed');
+  Future<void> updateItem(int itemId) async {
+
+    print("Updated item: ${itemId}");
   }
 
+  // -----------------------
+  // Delete an item
+  // -----------------------
+  Future<void> deleteItem(int itemId) async {
+
+    print('Deleted item ${itemId}');
+  }
+
+  // -----------------------
+  // Add a new list
+  // -----------------------
   Future<void> addList(ListModel list) async {
-    // TODO: Insert into DB or call API
+
     print("Added list: ${list.title}");
   }
 
-  Future<void> deleteList(String listId) async {
-    // TODO: Delete from DB or API
+  // -----------------------
+  // Update a list
+  // -----------------------
+  Future<void> updateList(int listId) async {
+
+    print("Updated list: ${listId}");
+  }
+
+  // -----------------------
+  // Delete a list
+  // -----------------------
+  Future<void> deleteList(int listId) async {
+
     print("Deleted list with id $listId");
   }
+
+  // -----------------------
+  // Add a new user
+  // -----------------------
+  Future<void> addUser(UserModel user) async {
+
+    print("Added user: ${user.username}");
+  }
+
+  // -----------------------
+  // Update a user
+  // -----------------------
+  Future<void> updateUser(int userId) async {
+
+    print("Updated user: ${userId}");
+  }
+
+  // -----------------------
+  // Delete a user
+  // -----------------------
+  Future<void> deleteUser(int userId) async {
+
+    print("Deleted user: ${userId}");
+  }
+
+  // -----------------------
+  // Add a new participant
+  // -----------------------
+  Future<void> addParticipant(int listId, int userId) async {
+
+    print("Added participant: ${userId} to list: ${listId}");
+  }
+
+  // -----------------------
+  // Remove a participant
+  // -----------------------
+  Future<void> removeParticipant(int listId, int userId) async {
+
+    print("Removed participant: ${userId} from list: ${listId}");
+  }
+
 }
