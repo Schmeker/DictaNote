@@ -7,8 +7,7 @@ class ListModel {
   final String title;
   final Template type; // "shopping", "todo", "etc."
   final DateTime createdAt;
-  final DateTime updatedAt;
-  final List<ItemModel> items;
+  DateTime? updatedAt;
 
   ListModel({
     required this.id,
@@ -16,9 +15,8 @@ class ListModel {
     required this.title,
     required this.type,
     required this.createdAt,
-    required this.updatedAt,
-    List<ItemModel>? items,
-  }) : items = items ?? [];
+    this.updatedAt,
+  });
 
   List<String> get allowedAttributes {
     switch (type) {
@@ -32,6 +30,5 @@ class ListModel {
         //return ["title"];
     }
   }
-
   int get listId => id;
 }
