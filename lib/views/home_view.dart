@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:group_radio_button/group_radio_button.dart' as grp;
 
-import '../providers/user_provider.dart';
 import '../models/list_model.dart';
+import '../models/unfinished_list_model.dart';
 import '../models/user_model.dart';
 import '../services/database_service.dart';
 import '../widgets/list_card.dart';
@@ -13,25 +13,33 @@ import 'list_view.dart';
 enum Template { toDo, shopping, custom }
 
 class HomePage extends StatefulWidget {
-// final UserModel user
+  final UserModel user;
+  final DatabaseService db;
 
-  //required this.user
-  HomePage({super.key,});
-
-  // TODO fetch user from database
-  final UserModel user = UserModel(id: 1, username: "joni", email: "joniwinter6@gmail.com", passwordHash: "123jgbas3213", firstname: "Jonathan", lastname: "Winter");
+  HomePage({super.key, required this.user, required this.db});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  late DatabaseService db;
-  final List<ListModel> _lists = [];
+  List<ListModel> _lists = [];
 
   Template _selectedTemplate = Template.values.first;
   final TextEditingController _customController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    loadOwnLists();
+  }
+
+  Future<void> loadOwnLists() async {
+    final fetchedItems = await widget.db.lists.getListsForUser(widget.user.id);
+    setState(() {
+      _lists = fetchedItems;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,15 +57,13 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => ListPage(list: _lists[index]),
+                  builder: (_) => ListPage(list: _lists[index], db: widget.db),
                 ),
               );
             },
-            onDelete: () {
-              setState(() {
-                //TODO: remove from database, then fetch list instead of deleting bsp: _lists.load();
-                _lists.removeAt(index);
-              });
+            onDelete: () async {
+              await widget.db.lists.deleteList(list.id);
+              await loadOwnLists();
             },
           );
         },
@@ -105,19 +111,25 @@ class _HomePageState extends State<HomePage> {
                   child: const Text("Close"),
                 ),
                 TextButton(
-                  onPressed: () {
-                    //TODO: index lists title if already same name exists: toDo, toDo 2, toDo 3, ....
+                  onPressed: () async {
                     String title = _customController.text.isEmpty
                         ? _selectedTemplate.name
                         : _customController.text;
 
-                    setState(() {
-                      //TODO: push to db, db should send id back to add it to the list, maybe first upload to db, so we can just give the id to the list, also id is currently a workaround
-                      _lists.add(ListModel( id: DateTime.now().millisecondsSinceEpoch, title: title, ownerId: 1, type: _selectedTemplate, createdAt: DateTime.now(), updatedAt: DateTime.now()));
-                    });
-
+                    await widget.db.lists.addList(
+                      UnfinishedListModel(
+                        title: title,
+                        ownerId: widget.user.id,
+                        type: _selectedTemplate,
+                        createdAt: DateTime.now(),
+                        updatedAt: DateTime.now(),
+                      ),
+                    );
+                    if (mounted) {
                       Navigator.pop(context);
-                    },
+                    }
+                    await loadOwnLists();
+                  },
                   child: const Text("Create"),
                 ),
               ],

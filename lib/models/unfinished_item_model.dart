@@ -1,22 +1,18 @@
 
-class ItemModel {
-  final int id;
+class UnfinishedItemModel {
   final int listId;
   String title;
-  String? description;
-  bool completed;
-  int? amount;
-  int? priority;
+  String? description; // Correctly nullable
+  int? amount;        // Correctly nullable
+  int? priority;      // Correctly nullable
   DateTime updatedAt;
-  DateTime? timeTill;
+  DateTime? timeTill;   // Correctly nullable
   final DateTime createdAt;
 
-  ItemModel({
-    required this.id,
+  UnfinishedItemModel({
     required this.listId,
     required this.title,
     this.description,
-    required this.completed,
     this.amount,
     this.priority,
     required this.updatedAt,
@@ -24,3 +20,4 @@ class ItemModel {
     required this.createdAt,
   });
 }
+
