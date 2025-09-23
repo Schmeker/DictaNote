@@ -1,20 +1,22 @@
-import 'package:Dictanote/models/list_model.dart';
 import 'package:flutter/material.dart';
+
+import '../models/list_model.dart';
+import '../models/unfinished_item_model.dart';
 import '../models/item_model.dart';
 import '../services/database_service.dart';
 import '../widgets/item_card.dart';
 
 class ListPage extends StatefulWidget {
   final ListModel list;
+  final DatabaseService db;
 
-  const ListPage({super.key, required this.list});
+  const ListPage({super.key, required this.list, required this.db});
 
   @override
   State<ListPage> createState() => _ListPageState();
 }
 
 class _ListPageState extends State<ListPage> {
-  late final DatabaseService db;
   List<ItemModel> _items = [];
   List<String> get _itemAttributes => widget.list.allowedAttributes;
 
@@ -25,20 +27,19 @@ class _ListPageState extends State<ListPage> {
   @override
   void initState() {
     super.initState();
-    db = DatabaseService();
     loadItems();
   }
 
-  void toggleCompleted(ItemModel item) async { ///TODO db
+  void toggleCompleted(ItemModel item) async {
     setState(() {
       item.completed = !item.completed;
-    });    //await db.updateItemCompletion(item, !item.completed);
-    //loadItems();
+    });
+    await widget.db.items.updateItem(item);
   }
 
   // TODO: do the same for home_view with lists
   Future<void> loadItems() async {
-    final fetchedItems = await db.getItemsForList(widget.list.id);
+    final fetchedItems = await widget.db.items.getItemsForList(widget.list.id);
     setState(() {
       _items = fetchedItems;
     });
@@ -61,11 +62,10 @@ class _ListPageState extends State<ListPage> {
             },
             onDelete: () {
               setState(() {
-                _items.removeAt(index);
+                widget.db.items.deleteItem(item.id);
+                loadItems();
               });
-              // TODO: call db for deletion --> loadItems()
             },
-            // TODO: call db --> loadItems()
             onToggle: (val) => toggleCompleted(item),
           );
         },
@@ -159,21 +159,21 @@ class _ListPageState extends State<ListPage> {
                         priorityInt = priority.round();
                       }
 
-                      setState(() { //TODO: create Entry in db (also Link list and item)--> Create itemModel --> Link this list and itemModel
-                          _items.add(
-                              ItemModel(
-                            id: DateTime.now().millisecondsSinceEpoch,
-                            listId: widget.list.listId,
-                            title: _titleController.text,
-                            description: _descriptionController.text,
-                            amount: int.tryParse(_amountController.text),
-                            priority: priorityInt,
-                            createdAt: DateTime.now(),
-                            updatedAt: DateTime.now()
-                          )
-                        );
-                      });
-                      Navigator.pop(context);
+                      await widget.db.items.addItem(
+                        UnfinishedItemModel(
+                          listId: widget.list.listId,
+                          title: _titleController.text,
+                          description: _descriptionController.text,
+                          amount: int.tryParse(_amountController.text),
+                          priority: priorityInt,
+                          createdAt: DateTime.now(),
+                          updatedAt: DateTime.now(),
+                        )
+                      );
+                      if (mounted) {
+                        Navigator.pop(context);
+                      }
+                      await loadItems();
                     }
                   },
                   child: const Text("Create"),
