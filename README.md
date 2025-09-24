@@ -18,8 +18,10 @@ CREATE TABLE users (
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL
 );
+```
 
--- Table: lists
+### Table: `lists`
+```sql
 CREATE TABLE lists (
     id SERIAL PRIMARY KEY,
     owner_id INT NOT NULL,
@@ -29,9 +31,11 @@ CREATE TABLE lists (
     updated_at TIMESTAMP NOT NULL,
     FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 );
+```
 
--- Table: items
-    CREATE TABLE items (
+### Table: `items`
+```sql
+CREATE TABLE items (
     id SERIAL PRIMARY KEY,
     list_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -44,8 +48,10 @@ CREATE TABLE lists (
     created_at TIMESTAMP NOT NULL,
     FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
 );
+```
 
--- Table: participates
+### Table: `participates`
+```sql
 CREATE TABLE participates (
     user_id INT NOT NULL,
     list_id INT NOT NULL,
@@ -53,5 +59,4 @@ CREATE TABLE participates (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
 );
-
-
+```
