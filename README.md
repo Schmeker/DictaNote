@@ -4,11 +4,15 @@ A new Flutter project.
 
 ## Getting Started
 
-This project is contains a Flutter app, working together with a postgre sql database.
+# Flutter + PostgreSQL Project
 
-For the database:
--- Table: users
-    CREATE TABLE users (
+This project contains a Flutter app that works together with a PostgreSQL database.
+
+## Database Schema
+
+### Table: `users`
+```sql
+CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
