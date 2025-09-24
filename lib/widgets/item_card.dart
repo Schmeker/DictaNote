@@ -28,7 +28,16 @@ class ItemCard extends StatelessWidget {
             decoration: item.completed ? TextDecoration.lineThrough : null,
           ),
         ),
-        subtitle: item.description != null ? Text(item.description!) : null,
+        subtitle:
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 10),
+            if (item.description != null) Text(item.description!),
+            if (item.amount != null) Text('Amount: ${item.amount!}'),
+            if (item.priority != null) Text('Priority: ${item.priority!}'),
+          ],
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

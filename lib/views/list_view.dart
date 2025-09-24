@@ -159,17 +159,26 @@ class _ListPageState extends State<ListPage> {
                 TextButton(
                   onPressed: () async {
                     if (_titleController.text.isNotEmpty) {
+
                       int? priorityInt;
                       if (_itemAttributes.contains("priority")) {
                         priorityInt = priority.round();
+                      }
+                      String? amount;
+                      if (_amountController.text.isNotEmpty) {
+                        amount = _amountController.text;
+                      }
+                      String? description;
+                      if (_descriptionController.text.isNotEmpty) {
+                        description = _descriptionController.text;
                       }
 
                       await widget.db.items.addItem(
                         UnfinishedItemModel(
                           listId: widget.list.listId,
                           title: _titleController.text,
-                          description: _descriptionController.text,
-                          amount: _amountController.text,
+                          description: description,
+                          amount: amount,
                           priority: priorityInt,
                           createdAt: DateTime.now(),
                           updatedAt: DateTime.now(),

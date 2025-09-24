@@ -11,7 +11,7 @@ class ItemPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(item.title)),
+      appBar: AppBar(centerTitle: true,title: Text(item.title)),
       body: const Center(
         child: Text("Item settings here"),
 

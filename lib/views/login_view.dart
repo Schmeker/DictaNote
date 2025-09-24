@@ -35,9 +35,8 @@ class _LoginViewState extends State<LoginView> {
 
   String? _validatePassword(String? value) {
     if ((value ?? '').isEmpty) return 'Please enter a password';
-    if ((value ?? '').length < 6) {
-      return 'Password must be at least 6 characters long';
-    }
+    if ((value ?? '').length < 6) return 'Password must be at least 6 characters long';
+    if ((value ?? '').length > 20) return 'Password cannot exceed 20 characters';
     return null;
   }
 
