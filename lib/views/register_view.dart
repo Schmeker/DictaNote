@@ -52,7 +52,7 @@ class _RegisterViewState extends State<RegisterView> {
         if (await widget.db.users.emailExists(_emailCtrl.text.trim())) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Email already exists. Please use a different email.')),
+              const SnackBar(content: Center(child:Text('Email already exists. Please use a different email.'),)),
             );
           }
           return;

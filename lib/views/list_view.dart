@@ -57,13 +57,18 @@ class _ListPageState extends State<ListPage> {
           final item = _items[index];
           return ItemCard(
             item: item,
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => ItemPage(item: _items[index], db: widget.db),
+                  builder: (_) => ItemPage(item: _items[index], db: widget.db, list: widget.list),
                 ),
               );
+              if (result != null) {
+                setState(() {
+                  loadItems();
+                });
+              }
             },
             onDelete: () {
               setState(() {
@@ -105,35 +110,32 @@ class _ListPageState extends State<ListPage> {
                     TextField(
                       controller: _titleController,
                       decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
                         labelText: "Title",
                       ),
                     ),
 
                   if (_itemAttributes.contains("description")) ...[
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: _descriptionController,
                       decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
                         labelText: "Description",
                       ),
                     ),
                   ],
 
                   if (_itemAttributes.contains("amount")) ...[
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: _amountController,
                       decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
                         labelText: "Amount",
                       ),
                     ),
                   ],
 
                   if (_itemAttributes.contains("priority")) ...[
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 12),
                     const Text("Priority"),
                     Slider(
                       value: priority,
