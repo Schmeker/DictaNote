@@ -2,8 +2,6 @@
 
 A new Flutter project.
 
-## Getting Started
-
 # Flutter + PostgreSQL Project
 
 This project contains a Flutter app that works together with a PostgreSQL database.
@@ -60,3 +58,10 @@ CREATE TABLE participates (
     FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
 );
 ```
+
+## What features could be implemented:
+ - Shared Lists
+ - Filters
+ - Hide/Show completed items
+ - Raspberry pi api
+
