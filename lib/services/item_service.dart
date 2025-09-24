@@ -68,6 +68,10 @@ class ItemService {
         'timeTill': item.timeTill,
       },
     );
+    await connection.execute(
+      Sql.named('UPDATE lists SET updated_at = @updatedAt WHERE id = @listId'),
+      parameters: {'listId': item.listId, 'updatedAt': DateTime.now()},
+    );
   }
 
 

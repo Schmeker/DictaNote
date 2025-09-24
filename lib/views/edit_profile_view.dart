@@ -54,7 +54,7 @@ class _EditProfileViewState extends State<EditProfileView> {
           await widget.db.users.emailExists(newEmail)) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Email already registered by another user.')),
+            const SnackBar(content: Center(child:Text('Email already registered by another user.'),)),
           );
         }
         return;
@@ -69,14 +69,14 @@ class _EditProfileViewState extends State<EditProfileView> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully!')),
+          const SnackBar(content: Center(child:Text('Profile updated successfully!'),)),
         );
-        Navigator.of(context).pop(updatedUser); // Return updated user to HomePage
+        Navigator.of(context).pop(updatedUser);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update profile: $e')),
+          SnackBar(content: Center(child:Text('Failed to update profile: $e'),)),
         );
       }
     }
@@ -85,7 +85,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: AppBar(centerTitle: true, title: const Text('Edit Profile')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(

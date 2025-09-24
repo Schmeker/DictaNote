@@ -23,4 +23,19 @@ class ItemModel {
     this.timeTill,
     required this.createdAt,
   });
+
+  copyWith({String? title, String? description, String? amount, int? priority}) {
+    return ItemModel(
+      id: id,
+      listId: listId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      completed: completed,
+      amount: amount ?? this.amount,
+      priority: priority ?? this.priority,
+      updatedAt: DateTime.now(),
+      timeTill: timeTill,
+      createdAt: createdAt,
+    );
+  }
 }

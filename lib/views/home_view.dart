@@ -90,7 +90,7 @@ class _HomePageState extends State<HomePage> {
         if (!mounted) return;
 
         messenger.showSnackBar(
-          const SnackBar(content: Text('Account deleted successfully.')),
+          const SnackBar(content: Center(child:Text('Account deleted successfully.'),)),
         );
 
         if (mounted) {
@@ -103,7 +103,7 @@ class _HomePageState extends State<HomePage> {
       } catch (e) {
         if (!mounted) return; // Check mounted *after* await
         messenger.showSnackBar(
-          SnackBar(content: Text('Failed to delete account: $e')),
+          SnackBar(content: Center(child:Text('Failed to delete account: $e'),)),
         );
       }
     }
@@ -128,7 +128,7 @@ class _HomePageState extends State<HomePage> {
         _currentUser = updatedUser;
       });
       messenger.showSnackBar(
-        const SnackBar(content: Text('Profile updated!')),
+        const SnackBar(content: Center(child:Text('Profile updated!'),)),
       );
     }
   }

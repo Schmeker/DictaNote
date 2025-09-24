@@ -63,7 +63,7 @@ class _LoginViewState extends State<LoginView> {
           );
         } else if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Invalid email or password')),
+            SnackBar(content: Center(child:Text('Invalid email or password'),)),
           );
         }
       } catch (e) {
