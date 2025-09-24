@@ -3,7 +3,7 @@ class UnfinishedItemModel {
   final int listId;
   String title;
   String? description; // Correctly nullable
-  int? amount;        // Correctly nullable
+  String? amount;        // Correctly nullable
   int? priority;      // Correctly nullable
   DateTime updatedAt;
   DateTime? timeTill;   // Correctly nullable

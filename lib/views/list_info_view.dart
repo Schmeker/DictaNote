@@ -1,1 +1,0 @@
-//more info for list when long clicked on

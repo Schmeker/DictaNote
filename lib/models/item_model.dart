@@ -5,7 +5,7 @@ class ItemModel {
   String title;
   String? description;
   bool completed;
-  int? amount;
+  String? amount;
   int? priority;
   DateTime updatedAt;
   DateTime? timeTill;

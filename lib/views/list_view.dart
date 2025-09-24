@@ -5,6 +5,7 @@ import '../models/unfinished_item_model.dart';
 import '../models/item_model.dart';
 import '../services/database_service.dart';
 import '../widgets/item_card.dart';
+import 'item_view.dart';
 
 class ListPage extends StatefulWidget {
   final ListModel list;
@@ -37,7 +38,6 @@ class _ListPageState extends State<ListPage> {
     await widget.db.items.updateItem(item);
   }
 
-  // TODO: do the same for home_view with lists
   Future<void> loadItems() async {
     final fetchedItems = await widget.db.items.getItemsForList(widget.list.id);
     setState(() {
@@ -48,7 +48,7 @@ class _ListPageState extends State<ListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.list.title)),
+      appBar: AppBar(centerTitle: true, title: Text(widget.list.title)),
       body: _items.isEmpty
           ? const Center(child: Text("No items yet"))
           : ListView.builder(
@@ -58,7 +58,12 @@ class _ListPageState extends State<ListPage> {
           return ItemCard(
             item: item,
             onTap: () {
-              // TODO: detail view for item in item_view.dart
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ItemPage(item: _items[index], db: widget.db),
+                ),
+              );
             },
             onDelete: () {
               setState(() {
@@ -154,17 +159,26 @@ class _ListPageState extends State<ListPage> {
                 TextButton(
                   onPressed: () async {
                     if (_titleController.text.isNotEmpty) {
+
                       int? priorityInt;
                       if (_itemAttributes.contains("priority")) {
                         priorityInt = priority.round();
+                      }
+                      String? amount;
+                      if (_amountController.text.isNotEmpty) {
+                        amount = _amountController.text;
+                      }
+                      String? description;
+                      if (_descriptionController.text.isNotEmpty) {
+                        description = _descriptionController.text;
                       }
 
                       await widget.db.items.addItem(
                         UnfinishedItemModel(
                           listId: widget.list.listId,
                           title: _titleController.text,
-                          description: _descriptionController.text,
-                          amount: int.tryParse(_amountController.text),
+                          description: description,
+                          amount: amount,
                           priority: priorityInt,
                           createdAt: DateTime.now(),
                           updatedAt: DateTime.now(),

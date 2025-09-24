@@ -19,7 +19,7 @@ class ItemService {
       title: row[2] as String,
       description: row[3] as String?,
       completed: row[4] as bool,
-      amount: row[5] as int?,
+      amount: row[5] as String?,
       priority: row[6] as int?,
       updatedAt: row[7] as DateTime,
       timeTill: row[8] as DateTime?,

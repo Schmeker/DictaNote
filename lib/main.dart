@@ -1,7 +1,7 @@
-import 'package:Dictanote/services/database_service.dart';
+import 'package:Dictanote/views/login_view.dart';
 import 'package:flutter/material.dart';
-import 'models/user_model.dart';
-import 'views/home_view.dart';
+
+import 'services/database_service.dart';
 
 void main() async {
   final db = await DatabaseService.create();
@@ -18,15 +18,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HomePage(
-        user: UserModel(
-          id: 1,
-          username: "joni",
-          email: "joniwinter6@gmail.com",
-          passwordHash: "123jgbas3213",
-          firstname: "Jonathan",
-          lastname: "Winter",
-        ),
+      home: LoginView(
         db: db,
       ),
     );

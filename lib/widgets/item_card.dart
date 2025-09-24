@@ -18,7 +18,8 @@ class ItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      elevation: 2.0,
       child: ListTile(
         onTap: onTap,
         title: Text(
@@ -27,7 +28,16 @@ class ItemCard extends StatelessWidget {
             decoration: item.completed ? TextDecoration.lineThrough : null,
           ),
         ),
-        subtitle: item.description != null ? Text(item.description!) : null,
+        subtitle:
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 10),
+            if (item.description != null) Text(item.description!),
+            if (item.amount != null) Text('Amount: ${item.amount!}'),
+            if (item.priority != null) Text('Priority: ${item.priority!}'),
+          ],
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
